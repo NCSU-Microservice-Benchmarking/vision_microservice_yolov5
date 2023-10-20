@@ -6,6 +6,7 @@ from flask import request
 from flask import Flask
 from flask import Response
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -22,12 +23,17 @@ def greet():
 def countGPU():
         return str(torch.cuda.device_count())
 
-@app.route('/detect',methods=['POST'])
+@app.route('/detections',methods=['POST'])
 def detect():
     # get the image from the multipart form
     image = request.files["image"].read()
+    # convert image buffer to a numpy array
+    image = np.frombuffer(image, np.uint8)
+    # image = request.files.get('image')
+    # # convert image string to a numpy array
+    # image = np.fromstring(image, np.uint8)
     # convert the image into a opencv image
-    image = cv2.imdecode(np.frombuffer(image, np.uint8), -1)
+    image = cv2.imdecode(image, -1)
     # send the image to the model and get the result
     results = model(image)
     # get the bounding boxes of the detected objects
@@ -43,6 +49,33 @@ def detect():
     # send the image to the client as an png image encoded as a binary string
     return Response(image, mimetype='image/png')
 
+# a route to test the server where allows to specify the ip and port of the test server
+# example: http://10.161.0.29:8000/test?test_server_ip=localhost&test_server_port=8001&task=detection&self_port=8000&api=detections
+@app.route('/test')
+def test():
+    test_server_ip = request.args.get('test_server_ip')
+    test_server_port = request.args.get('test_server_port')
+    task = request.args.get('task')
+    self_port = request.args.get('self_port')
+    api = request.args.get('api')
+    print("test server ip: " + test_server_ip)
+    print("test server port: " + test_server_port)
+    print("task: " + task)
+    print("self port: " + self_port)
+    print("api: " + api)
+    # send a post request to the test server
+    # with args "task" to note the task it is performing, "port" of the it is running on, and "api" to specify the api to test
+    url = "http://" + test_server_ip + ":" + test_server_port + "/tests?task=" + task + "&port=" + self_port + "&api=" + api
+    print("request url: " + url)
+    # send the request
+    response = requests.post(url)
+    # check the response
+    if response.status_code == 200:
+        return "Test successful"
+    else:
+        return "Test failed"
+
+     
 
 
 

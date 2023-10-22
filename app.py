@@ -25,15 +25,17 @@ def countGPU():
 
 @app.route('/detections',methods=['POST'])
 def detect():
-    # get the image from the multipart form
-    image = request.files["image"].read()
-    # convert image buffer to a numpy array
-    image = np.frombuffer(image, np.uint8)
-    # image = request.files.get('image')
-    # # convert image string to a numpy array
-    # image = np.fromstring(image, np.uint8)
-    # convert the image into a opencv image
-    image = cv2.imdecode(image, -1)
+    # get image from the request form
+    image = request.form.get('image')
+    # convert image string to a numpy array
+    # image_buffer = bytes(image, 'utf-8')
+    # image = np.frombuffer(image_buffer, np.uint8)
+    # print(image.shape)
+    # # image = request.files.get('image')
+    # # # convert image string to a numpy array
+    # # image = np.fromstring(image, np.uint8)
+    # # convert the image into a opencv image
+    # image = cv2.imdecode(image, -1)
     # send the image to the model and get the result
     results = model(image)
     # get the bounding boxes of the detected objects
